@@ -1,0 +1,582 @@
+<title>Duo Cosmos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --bg-0:#0a0e2a;
+    --bg-1:#11163f;
+    --panel:#161b4a;
+    --panel-edge:#252c66;
+    --text:#eef0ff;
+    --text-dim:#9aa0d0;
+    --accent:#c58bff;
+    --accent-2:#ff8fc0;
+    --gold:#ffd166;
+    --good:#3fe0a5;
+    --shadow: 0 20px 50px -20px rgba(3,4,20,0.65);
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(1px 1px at 8% 22%, #ffffff 0 100%) ,
+      radial-gradient(1px 1px at 82% 12%, #ffffff 0 100%),
+      radial-gradient(1px 1px at 32% 78%, #ffffff 0 100%),
+      radial-gradient(1px 1px at 68% 62%, #ffffff 0 100%),
+      radial-gradient(1px 1px at 92% 88%, #ffffff 0 100%),
+      radial-gradient(1px 1px at 15% 55%, #ffffff 0 100%),
+      radial-gradient(1px 1px at 55% 30%, #ffffff 0 100%),
+      radial-gradient(circle at 18% 15%, rgba(197,139,255,0.16), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(255,143,192,0.14), transparent 50%),
+      linear-gradient(160deg, var(--bg-0), var(--bg-1));
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'Manrope', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 32px 16px;
+  }
+
+  main.board{
+    width:100%;
+    max-width: 560px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  header{ text-align:center; display:flex; flex-direction:column; gap:6px; }
+
+  .eyebrow{
+    margin:0;
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--accent-2);
+    font-weight:700;
+  }
+
+  h1{
+    margin:0;
+    font-family:'Unbounded', sans-serif;
+    font-weight:800;
+    font-size: clamp(1.8rem, 6vw, 2.4rem);
+    text-wrap: balance;
+    background: linear-gradient(90deg, var(--text), var(--accent) 65%, var(--accent-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .tagline{
+    margin:0;
+    color:var(--text-dim);
+    font-size:0.95rem;
+    text-wrap: balance;
+  }
+
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .stats{
+    display:flex;
+    gap:10px;
+    flex:1;
+    min-width:220px;
+  }
+
+  .stat{
+    flex:1;
+    background: var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:12px;
+    padding:8px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-label{
+    font-size:0.62rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+
+  .stat-value{
+    font-family:'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size:1.05rem;
+    font-weight:700;
+  }
+
+  .difficulty{
+    display:flex;
+    gap:6px;
+    background: var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:12px;
+    padding:4px;
+  }
+
+  .diff-btn{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-weight:700;
+    font-size:0.78rem;
+    padding:7px 10px;
+    border-radius:9px;
+    cursor:pointer;
+  }
+
+  .diff-btn.active{
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#1a0f2e;
+  }
+
+  .diff-btn:focus-visible, .restart:focus-visible, .card:focus-visible, #playAgain:focus-visible{
+    outline: 2px solid var(--gold);
+    outline-offset:2px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: 10px;
+  }
+
+  .card{
+    position:relative;
+    aspect-ratio: 3/4;
+    border:none;
+    background:none;
+    padding:0;
+    cursor:pointer;
+    perspective: 700px;
+  }
+
+  .card-inner{
+    position:absolute;
+    inset:0;
+    border-radius:14px;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .card.flipped .card-inner, .card.matched .card-inner{
+    transform: rotateY(180deg);
+  }
+
+  .card-face{
+    position:absolute;
+    inset:0;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backface-visibility:hidden;
+    border:1px solid var(--panel-edge);
+  }
+
+  .card-back{
+    background: linear-gradient(145deg, var(--panel), var(--bg-1));
+    box-shadow: var(--shadow);
+  }
+
+  .card-back::before{
+    content:"";
+    width:34%;
+    height:34%;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, var(--accent), var(--accent-2) 70%, transparent 72%);
+    opacity:0.55;
+  }
+
+  .card-front{
+    background: linear-gradient(160deg, #1d2358, #171c46);
+    transform: rotateY(180deg);
+    color: var(--accent);
+  }
+
+  .card.matched .card-front{
+    color: var(--good);
+    box-shadow: 0 0 0 2px var(--good) inset, var(--shadow);
+  }
+
+  .card-front svg{ width:52%; height:52%; }
+
+  .card.matched{ animation: settle 0.5s ease; }
+
+  @keyframes settle{
+    0%{ transform: scale(1); }
+    35%{ transform: scale(1.08); }
+    100%{ transform: scale(1); }
+  }
+
+  .restart{
+    appearance:none;
+    border:1px solid var(--panel-edge);
+    background: var(--panel);
+    color: var(--text);
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:0.9rem;
+    padding:12px;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow: var(--shadow);
+  }
+
+  .restart:hover, .diff-btn:hover:not(.active){ filter:brightness(1.15); }
+
+  .win-overlay{
+    position:fixed;
+    inset:0;
+    background: rgba(6,7,26,0.72);
+    backdrop-filter: blur(3px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:10;
+  }
+
+  .win-overlay[hidden]{ display:none; }
+
+  .win-card{
+    background: linear-gradient(160deg, var(--panel), var(--bg-1));
+    border:1px solid var(--panel-edge);
+    border-radius:18px;
+    padding:28px 26px;
+    max-width:340px;
+    width:100%;
+    text-align:center;
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.7);
+  }
+
+  .win-eyebrow{
+    margin:0;
+    font-size:0.7rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:700;
+  }
+
+  .win-card h2{
+    margin:6px 0 4px;
+    font-family:'Unbounded', sans-serif;
+    font-size:1.7rem;
+  }
+
+  .win-card p#winStats{
+    color:var(--text-dim);
+    font-family:'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    margin:0 0 18px;
+  }
+
+  #playAgain{
+    appearance:none;
+    border:none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#1a0f2e;
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:0.95rem;
+    padding:12px 22px;
+    border-radius:12px;
+    cursor:pointer;
+    width:100%;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .card-inner{ transition:none; }
+    .card.matched{ animation:none; }
+  }
+
+  @media (max-width:420px){
+    .grid{ gap:8px; }
+    .stats{ min-width:0; }
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M15.5 3.5a9 9 0 1 0 5 16 10 10 0 0 1-5-16z" fill="currentColor"/></symbol>
+    <symbol id="ic-planet" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor"/><ellipse cx="12" cy="12" rx="11" ry="3.2" fill="none" stroke="currentColor" stroke-width="1.6" transform="rotate(-18 12 12)"/></symbol>
+    <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 1 L14.3 9.7 L23 12 L14.3 14.3 L12 23 L9.7 14.3 L1 12 L9.7 9.7 Z" fill="currentColor"/></symbol>
+    <symbol id="ic-comet" viewBox="0 0 24 24"><circle cx="17" cy="7" r="4" fill="currentColor"/><path d="M14 9 L2 21 M15.5 12 L6 21.5 M11.5 5.5 L1.5 15.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/></symbol>
+    <symbol id="ic-rocket" viewBox="0 0 24 24"><path d="M12 1 C16 4 16.5 10 15 15 L9 15 C7.5 10 8 4 12 1Z" fill="currentColor"/><path d="M9 14 L5 19 L9 17.5Z M15 14 L19 19 L15 17.5Z" fill="currentColor"/><circle cx="12" cy="9" r="1.5" fill="var(--bg-1)"/><path d="M10 16 L9 22 L12 19.5 L15 22 L14 16Z" fill="currentColor" opacity="0.8"/></symbol>
+    <symbol id="ic-ufo" viewBox="0 0 24 24"><ellipse cx="12" cy="14" rx="11" ry="3.4" fill="currentColor"/><path d="M6 12 a6 6 0 0 1 12 0z" fill="currentColor" opacity="0.75"/><circle cx="12" cy="10" r="1.4" fill="var(--bg-1)"/></symbol>
+    <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></g></symbol>
+    <symbol id="ic-satellite" viewBox="0 0 24 24"><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/><path d="M2 5 L8 11 M22 5 L16 11" stroke="currentColor" stroke-width="1.8"/><rect x="0.5" y="1.5" width="6" height="4" rx="0.8" transform="rotate(-30 3.5 3.5)" fill="currentColor" opacity="0.8"/><rect x="17.5" y="1.5" width="6" height="4" rx="0.8" transform="rotate(30 20.5 3.5)" fill="currentColor" opacity="0.8"/><path d="M15 15 l4 6" stroke="currentColor" stroke-width="1.6"/></symbol>
+  </defs>
+</svg>
+
+<main class="board">
+  <header>
+    <p class="eyebrow">Jeu de mémoire</p>
+    <h1>Duo Cosmos</h1>
+    <p class="tagline">Retournez deux cartes, trouvez les paires, videz le ciel.</p>
+  </header>
+
+  <div class="controls">
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Coups</span><span class="stat-value" id="moves">0</span></div>
+      <div class="stat"><span class="stat-label">Temps</span><span class="stat-value" id="timer">00:00</span></div>
+      <div class="stat"><span class="stat-label">Record</span><span class="stat-value" id="best">—</span></div>
+    </div>
+    <div class="difficulty" role="group" aria-label="Difficulté">
+      <button class="diff-btn active" data-size="12" type="button">Facile · 12</button>
+      <button class="diff-btn" data-size="16" type="button">Défi · 16</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid" style="--cols:4"></div>
+
+  <button class="restart" id="restart" type="button">Recommencer</button>
+</main>
+
+<div class="win-overlay" id="winOverlay" hidden>
+  <div class="win-card">
+    <p class="win-eyebrow">Ciel dégagé</p>
+    <h2>Bravo, Jade !</h2>
+    <p id="winStats"></p>
+    <button id="playAgain" type="button">Rejouer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ICONS = ["ic-moon","ic-planet","ic-star","ic-comet","ic-rocket","ic-ufo","ic-sun","ic-satellite"];
+
+  var grid = document.getElementById('grid');
+  var movesEl = document.getElementById('moves');
+  var timerEl = document.getElementById('timer');
+  var bestEl = document.getElementById('best');
+  var restartBtn = document.getElementById('restart');
+  var winOverlay = document.getElementById('winOverlay');
+  var winStats = document.getElementById('winStats');
+  var playAgainBtn = document.getElementById('playAgain');
+  var diffBtns = Array.prototype.slice.call(document.querySelectorAll('.diff-btn'));
+
+  var state = {
+    size: 12,
+    cards: [],
+    flipped: [],
+    matchedCount: 0,
+    moves: 0,
+    seconds: 0,
+    timerId: null,
+    started: false,
+    locked: false
+  };
+
+  function safeGet(key){
+    try { return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try { localStorage.setItem(key, val); } catch(e){ /* ignore */ }
+  }
+
+  function shuffle(arr){
+    for (var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function fmtTime(s){
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (sec < 10 ? '0' + sec : sec);
+  }
+
+  function bestKey(){ return 'duo-cosmos-best-' + state.size; }
+
+  function refreshBest(){
+    var b = safeGet(bestKey());
+    bestEl.textContent = b ? b + ' coups' : '—';
+  }
+
+  function stopTimer(){
+    if (state.timerId){ clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startTimer(){
+    if (state.timerId) return;
+    state.timerId = setInterval(function(){
+      state.seconds++;
+      timerEl.textContent = fmtTime(state.seconds);
+    }, 1000);
+  }
+
+  function buildDeck(size){
+    var pairCount = size / 2;
+    var chosen = shuffle(ICONS.slice()).slice(0, pairCount);
+    var deck = [];
+    chosen.forEach(function(icon, i){
+      deck.push({ icon: icon, pairId: i, matched: false });
+      deck.push({ icon: icon, pairId: i, matched: false });
+    });
+    return shuffle(deck);
+  }
+
+  function render(){
+    grid.style.setProperty('--cols', state.size === 16 ? 4 : 3);
+    grid.innerHTML = '';
+    state.cards.forEach(function(card, idx){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'card';
+      btn.setAttribute('data-idx', idx);
+      btn.setAttribute('aria-label', 'Carte cachée');
+      btn.innerHTML =
+        '<span class="card-inner">' +
+          '<span class="card-face card-back"></span>' +
+          '<span class="card-face card-front"><svg><use href="#' + card.icon + '"></use></svg></span>' +
+        '</span>';
+      btn.addEventListener('click', function(){ onCardClick(idx); });
+      grid.appendChild(btn);
+    });
+    syncCardVisuals();
+  }
+
+  function syncCardVisuals(){
+    var els = grid.querySelectorAll('.card');
+    els.forEach(function(el, idx){
+      var card = state.cards[idx];
+      el.classList.toggle('matched', card.matched);
+      el.classList.toggle('flipped', state.flipped.indexOf(idx) !== -1);
+    });
+  }
+
+  function onCardClick(idx){
+    if (state.locked) return;
+    var card = state.cards[idx];
+    if (card.matched || state.flipped.indexOf(idx) !== -1) return;
+
+    if (!state.started){ state.started = true; startTimer(); }
+
+    state.flipped.push(idx);
+    syncCardVisuals();
+
+    if (state.flipped.length === 2){
+      state.locked = true;
+      state.moves++;
+      movesEl.textContent = state.moves;
+      var a = state.cards[state.flipped[0]];
+      var b = state.cards[state.flipped[1]];
+      if (a.pairId === b.pairId){
+        a.matched = true; b.matched = true;
+        state.matchedCount += 2;
+        state.flipped = [];
+        state.locked = false;
+        syncCardVisuals();
+        if (state.matchedCount === state.cards.length){ onWin(); }
+      } else {
+        setTimeout(function(){
+          state.flipped = [];
+          state.locked = false;
+          syncCardVisuals();
+        }, 700);
+      }
+    }
+  }
+
+  function onWin(){
+    stopTimer();
+    var prevBest = parseInt(safeGet(bestKey()) || '0', 10);
+    if (!prevBest || state.moves < prevBest){
+      safeSet(bestKey(), String(state.moves));
+    }
+    refreshBest();
+    winStats.textContent = state.moves + ' coups · ' + fmtTime(state.seconds);
+    winOverlay.hidden = false;
+  }
+
+  function newGame(){
+    stopTimer();
+    state.cards = buildDeck(state.size);
+    state.flipped = [];
+    state.matchedCount = 0;
+    state.moves = 0;
+    state.seconds = 0;
+    state.started = false;
+    state.locked = false;
+    movesEl.textContent = '0';
+    timerEl.textContent = '00:00';
+    winOverlay.hidden = true;
+    refreshBest();
+    render();
+  }
+
+  diffBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      diffBtns.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      state.size = parseInt(btn.getAttribute('data-size'), 10);
+      newGame();
+    });
+  });
+
+  restartBtn.addEventListener('click', newGame);
+  playAgainBtn.addEventListener('click', newGame);
+
+  function start(saved){
+    if (saved && saved.size){
+      state.size = saved.size;
+      diffBtns.forEach(function(b){
+        b.classList.toggle('active', parseInt(b.getAttribute('data-size'),10) === saved.size);
+      });
+    }
+    if (saved && saved.cards && saved.cards.length){
+      state.cards = saved.cards;
+      state.moves = saved.moves || 0;
+      state.seconds = saved.seconds || 0;
+      state.matchedCount = saved.matchedCount || 0;
+      state.started = saved.started || false;
+      movesEl.textContent = state.moves;
+      timerEl.textContent = fmtTime(state.seconds);
+      refreshBest();
+      render();
+      if (state.started && state.matchedCount < state.cards.length){ startTimer(); }
+      if (state.matchedCount === state.cards.length && state.cards.length){ winOverlay.hidden = false; }
+    } else {
+      newGame();
+    }
+  }
+
+  if (window.claude && window.claude.hot){
+    window.claude.hot.snapshot(function(){
+      return {
+        size: state.size,
+        cards: state.cards,
+        moves: state.moves,
+        seconds: state.seconds,
+        matchedCount: state.matchedCount,
+        started: state.started
+      };
+    });
+    window.claude.hot.ready ? window.claude.hot.ready(start) : start(window.claude.hot.data || {});
+  } else {
+    start(null);
+  }
+})();
+</script>
